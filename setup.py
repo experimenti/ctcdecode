@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 import multiprocessing.pool
 import os
+import glob
 
 from setuptools import setup, find_packages, distutils
+from torch.utils.cpp_extension import BuildExtension, CppExtension
 
 this_file = os.path.dirname(__file__)
 
@@ -36,22 +38,25 @@ def parallelCCompile(self,
     list(thread_pool.imap(_single_compile, objects))
     return objects
 
+# third_party_includes = [os.path.realpath(os.path.join("third_party", lib)) for lib in third_party_libs]
+ctc_sources = glob.glob('ctcdecode/src/*.cpp')
+ctc_headers = ['ctcdecode/src/binding.h', ]
 
 # hack compile to support parallel compiling
 distutils.ccompiler.CCompiler.compile = parallelCCompile
+
 setup(
     name="ctcdecode",
-    version="0.3",
-    description="CTC Decoder for PyTorch based on Paddle Paddle's implementation",
-    url="https://github.com/parlance/ctcdecode",
-    author="Ryan Leary",
-    author_email="ryanleary@gmail.com",
-    install_requires=["cffi>=1.0.0"],
-    setup_requires=["cffi>=1.0.0", "wget"],
-    # Exclude the build files.
-    packages=find_packages(exclude=["build"]),
-    ext_package="",
-    cffi_modules=[
-        os.path.join(this_file, "build.py:ffi")
-    ]
+    ext_modules=[
+        CppExtension('ctc_decode', ['ctcdecode/src/lltm.cpp'],
+    )],
+    include_dirs=[
+            '/ctcdecode/src/'
+    ],
+    source_dir=[
+            '/ctcdecode/src/'
+    ],
+    cmdclass={
+        'build_ext': BuildExtension
+    }
 )

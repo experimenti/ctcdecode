@@ -6,7 +6,7 @@ import tarfile
 import warnings
 
 import wget
-from torch.utils.ffi import create_extension
+from torch.utils.cpp_extension import BuildExtension 
 
 
 def download_extract(url, dl_path):
